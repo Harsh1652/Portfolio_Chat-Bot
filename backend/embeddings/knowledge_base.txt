@@ -1,0 +1,68 @@
+#About Me
+As a backend-focused developer with full-stack experience, I thrive on building secure, scalable systems that make a real impact. 
+At Excollo, I'm currently working on an Order Management System where I design and implement core backend modules and explore customer clustering using vector databases and ML techniques.
+My core strengths lie in Node.js, Express, and MongoDB, alongside a strong foundation in Java and Spring Boot. 
+I enjoy architecting clean APIs, solving complex backend problems, and integrating systems that perform efficiently under real-world demands.
+Outside of my development work, I’m constantly exploring new technologies, sharpening my problem-solving skills on LeetCode, and working on personal projects that push my learning further. 
+I believe great software is built at the intersection of thoughtful design, strong architecture, and a passion for continuous improvement.
+
+#Experience
+    Backend Developer Intern
+    Excollo
+    Feb 2025 - Present
+        CRUDO - 
+            Contributed to a full-stack order management system (Crudo), integrated with SWIL ERP
+            Developed and maintained modules: Order, Customer, Notification, and Store
+            Worked with Node.js, Express, MongoDB, JWT, REST APIs, Cron jobs
+            Implementing vector database for customer clustering and purchase pattern analysis
+
+    Freelance 
+        Balaji Exports 
+            Build a business website for Balaji Exports using React and MUI.
+
+
+    
+
+
+#Projects
+    
+    ShopEase                                                                                                                                                                                  Jan 2025       
+        Developed a full-stack e-commerce platform showcasing secure authentication, role-based access control 
+        and responsive UI. 
+        Strengthened security features using Spring Security, with encrypted passwords and user/admin roles for  
+        demonstration purposes. 
+        Built and tested RESTful APIs for product, cart, and order management, ensuring scalability and maintainability. 
+        Designed core cart and checkout features with complete order placement and history tracking functionality. 
+        Technologies used: Spring Boot, Spring Security, REST APIs, MySQL, Thymeleaf, HTML, CSS, JavaScript, Git
+        Github - https://github.com/Harsh1652/ShopEase 
+    
+    Chattify                                                                                                                                                                                       Dec 2024 
+        Developed a real-time chat application with React.js, Node.js, and MongoDB to demonstrate messaging  
+        system architecture. 
+        Implemented real-time communication using Socket.io, showcasing event-driven architecture for instant  
+        messaging. 
+        Designed a fully responsive user interface for seamless use across devices, improving UX design skills. 
+        Integrated Cloudinary for efficient profile image management and delivery in a scalable environment. 
+        Technologies used: React.js, Node.js, Express, MongoDB, Socket.io, RESTful APIs, Cloudinary, Git, GitHub. 
+        Github - https://github.com/Harsh1652/Chattify
+
+    SecureNet(Real-Time Intrusion Detection and Vulnerability Scanner)                                                                        Oct 2024  
+        Developed a real-time intrusion detection and vulnerability scanning system, integrating tools such as  
+        Snort and Nikto. 
+        Built a security dashboard in Spring Boot for real-time monitoring and event tracking, simulating network  
+        security protocols. 
+        Created RESTful APIs to facilitate security scans and data retrieval from detection tools. 
+        Implemented log parsing mechanisms to extract actionable security insights for system demonstration purposes. 
+        Technologies used: Spring Boot, Java, RESTful APIs, HTML, CSS, JavaScript, log monitoring, JSON/XML,  
+        and MySQL.
+        Github - https://github.com/Harsh1652/SecureNet
+
+#Services
+    Full-Stack WebApplication Development
+    Mobile Application Development
+    AI ChatBot Development
+
+
+#Education
+  MCA | UPES | 2023 - 2025
+  BCA | St.Xavier's college | 2020 - 2023

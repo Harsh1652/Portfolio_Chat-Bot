@@ -14,10 +14,7 @@ function App() {
     setQuestion("");
 
     try {
-      const apiUrl = process.env.NODE_ENV === 'production' 
-        ? '/api/chat'  // Vercel deployment
-        : '/api/chat'; // Local development with proxy
-      
+      const apiUrl = '/api/chat';
       console.log("Sending request to:", apiUrl);
       const res = await axios.post(apiUrl, { question });
       console.log("Response received:", res.data);

@@ -33,7 +33,11 @@ const cosineSimilarity = (a, b) => {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 };
 
-export default async function handler(req, res) {  // Added async keyword
+// The handler should work with the request body format from your frontend
+export default async function handler(req, res) {
+  // Make sure this line captures the question correctly
+  const { question } = req.body;
+  
   // Add at the beginning of your function
   console.log("API route hit:", req.url);
   console.log("Request body:", req.body);
@@ -55,8 +59,6 @@ export default async function handler(req, res) {  // Added async keyword
 
   try {
     await connectToDatabase();
-    
-    const { question } = req.body;
     
     // Check if it's a greeting
     if (question.toLowerCase().trim() === 'hi' || 

@@ -14,13 +14,15 @@ function App() {
     setQuestion("");
 
     try {
+      // Force use of /api/chat path in all environments
       const apiUrl = '/api/chat';
+      
       console.log("Sending request to:", apiUrl);
-      const res = await axios.post(apiUrl, { question });
-      console.log("Response received:", res.data);
+      const response = await axios.post(apiUrl, { question: question });
+      console.log("Response received:", response.data);
       setMessages([
         ...newMessages,
-        { type: "bot", text: res.data.answer.trim() },
+        { type: "bot", text: response.data.answer.trim() },
       ]);
     } catch (err) {
       console.error("Error details:", {
@@ -60,3 +62,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,0 +1,19 @@
+{
+  "name": "portfolio-chatbot",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "cohere-ai": "^7.17.1",
+    "openai": "^4.98.0",
+    "mongoose": "^8.14.2",
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "body-parser": "^2.2.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "build": "cd frontend && npm run build"
+  }
+}

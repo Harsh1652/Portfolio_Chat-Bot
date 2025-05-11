@@ -1,20 +1,13 @@
-// server.js
-import express from "express";
-import bodyParser from "body-parser";
-import cors from "cors";
-import { OpenAI } from "openai";
+// chat.js
 import { CohereClient } from "cohere-ai";
-import dotenv from "dotenv";
+import { OpenAI } from "openai";
 import mongoose from "mongoose";
-import Chunk from "./models/chunk.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 // Configuration object - keeps all configurable elements in one place for easy updating
 const config = {
-  // Server configuration
-  port: process.env.PORT || 3002,  // Try a different port
-  
   // NLP models configuration
   models: {
     embedding: "embed-english-v3.0",
@@ -99,25 +92,26 @@ User Question: {question}
 Answer (REMEMBER TO BE EXTREMELY BRIEF - 2-4 SENTENCES MAX):`
 };
 
-const app = express();
-app.use(cors({
-  origin: ['http://localhost:3000'],
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
-app.use(bodyParser.json());
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY,
+// MongoDB Schema
+const chunkSchema = new mongoose.Schema({
+  content: { type: String, required: true },
+  embedding: { type: [Number], required: true }
 });
+
+// Cache connection for serverless environment
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedDb) return cachedDb;
+  
+  const client = await mongoose.connect(process.env.MONGODB_URI);
+  cachedDb = client.connection;
+  return cachedDb;
+}
 
 // Helper functions
 const cosineSimilarity = (a, b) => {
-  let dot = 0.0;
-  let normA = 0.0;
-  let normB = 0.0;
+  let dot = 0.0, normA = 0.0, normB = 0.0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     normA += a[i] * a[i];
@@ -282,13 +276,30 @@ function getRelevantChunks(chunks, intent, userEmbedding) {
   return selectedChunks;
 }
 
-async function startServer() {
-  console.log("🔍 MONGO_URI:", process.env.MONGODB_URI);
+export default async (req, res) => {
+  // Add detailed logging
+  console.log("API endpoint hit", {
+    method: req.method,
+    path: req.path,
+    body: JSON.stringify(req.body).slice(0, 100)
+  });
+  
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
 
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log("✅ Connected to MongoDB");
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-  app.post("/api/chat", async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
     const { question } = req.body;
     
     console.log(`Received question: "${question}"`);
@@ -308,7 +319,17 @@ async function startServer() {
         answer: config.responses.notRelated
       });
     }
+    
+    // Add more detailed DB connection logging
+    console.log("Connecting to MongoDB...");
+    await connectToDatabase();
+    console.log("MongoDB connected successfully");
 
+    // Initialize Cohere client for embeddings
+    const cohere = new CohereClient({
+      token: process.env.COHERE_API_KEY,
+    });
+    
     // Generate embeddings for the question
     const cohereRes = await cohere.embed({
       texts: [question],
@@ -318,9 +339,16 @@ async function startServer() {
 
     const userEmbedding = cohereRes.embeddings[0];
 
+    // Define Chunk model for this function
+    const Chunk = mongoose.models.Chunk || mongoose.model('Chunk', chunkSchema);
+
     // Fetch all chunks from database
     const chunks = await Chunk.find();
     console.log(`Found ${chunks.length} chunks in database`);
+    
+    if (chunks.length === 0) {
+      return res.json({ answer: config.responses.notFound });
+    }
 
     // Detect intent and get relevant chunks
     const intent = detectIntent(question);
@@ -342,11 +370,15 @@ async function startServer() {
 
     const combinedContent = selectedChunks.map(item => item.chunk.content).join("\n\n");
 
+    // Initialize OpenAI
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
     // Use template for user prompt
     const userPrompt = config.userPromptTemplate
       .replace("{context}", combinedContent)
       .replace("{question}", question);
 
+    // Generate response using OpenAI
     const completion = await openai.chat.completions.create({
       model: config.models.completion,
       messages: [
@@ -360,16 +392,12 @@ async function startServer() {
     });
 
     res.json({ answer: completion.choices[0].message.content });
-  });
-
-  // Add a simple health check endpoint
-  app.get("/health", (req, res) => {
-    res.status(200).json({ status: 'ok', message: 'Server is running!' });
-  });
-
-  app.listen(config.port, () => {
-    console.log(`🚀 Server running on http://localhost:${config.port}`);
-  });
-}
-
-startServer().catch(console.error);
+  } catch (error) {
+    console.error("API Error:", {
+      message: error.message,
+      stack: error.stack,
+      mongoURI: process.env.MONGODB_URI ? "URI exists" : "No URI found"
+    });
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+};

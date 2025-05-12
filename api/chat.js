@@ -24,7 +24,7 @@ const config = {
     projects: {
       keywords: ["projects", "portfolio", "work", "created", "built", "developed"],
       identifiers: ["#projects", "projects:", "portfolio:"],
-      knownProjects: ["shopease", "chattify", "securenet"] // Can be dynamically loaded from DB
+      knownProjects: ["shopease", "chattify", "securenet","portfolio Chatbot"] // Can be dynamically loaded from DB
     },
     experience: {
       keywords: ["experience", "work", "history", "job", "career", "intern", "internship", "employment"],

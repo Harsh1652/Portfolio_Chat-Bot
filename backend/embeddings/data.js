@@ -21,6 +21,10 @@ module.exports = [
   },
   {
     "id": "chunk-6",
-    "text": "#Services\r\n    Full-Stack WebApplication Development\r\n    Mobile Application Development\r\n    AI ChatBot Development\r\n\n#Education\r\n  MCA | UPES | 2023 - 2025\r\n  BCA | St.Xavier's college | 2020 - 2023"
+    "text": "Portfolio-Chatbot\r\n        Built a full-stack chatbot using React.js, Node.js/Express, and MongoDB, deployed via Vercel (serverless).\r\n        Integrated OpenAI GPT-3.5 Turbo and Cohere Embedding Model for contextual Q&A using semantic search and vector similarity.\r\n        Designed a responsive UI with real-time chat and intent-based response handling.\r\n        Secured API endpoints and optimized performance for fast, accurate retrieval from vector data.\r\n        Technologies used: React.js, Node.js, MongoDB, OpenAI, Cohere, Vercel, REST APIs, Vector Search.\r\n        Github - https://github.com/Harsh1652/Portfolio_Chat-Bot\r\n\n#Services\r\n    Full-Stack WebApplication Development\r\n    Mobile Application Development\r\n    AI ChatBot Development"
+  },
+  {
+    "id": "chunk-7",
+    "text": "#Education\r\n  MCA | UPES | 2023 - 2025\r\n  BCA | St.Xavier's college | 2020 - 2023"
   }
 ];

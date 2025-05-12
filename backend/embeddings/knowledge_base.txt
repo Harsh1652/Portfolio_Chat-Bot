@@ -57,6 +57,16 @@ I believe great software is built at the intersection of thoughtful design, stro
         and MySQL.
         Github - https://github.com/Harsh1652/SecureNet
 
+    Portfolio-Chatbot
+        Built a full-stack chatbot using React.js, Node.js/Express, and MongoDB, deployed via Vercel (serverless).
+        Integrated OpenAI GPT-3.5 Turbo and Cohere Embedding Model for contextual Q&A using semantic search and vector similarity.
+        Designed a responsive UI with real-time chat and intent-based response handling.
+        Secured API endpoints and optimized performance for fast, accurate retrieval from vector data.
+        Technologies used: React.js, Node.js, MongoDB, OpenAI, Cohere, Vercel, REST APIs, Vector Search.
+        Github - https://github.com/Harsh1652/Portfolio_Chat-Bot
+
+
+
 #Services
     Full-Stack WebApplication Development
     Mobile Application Development

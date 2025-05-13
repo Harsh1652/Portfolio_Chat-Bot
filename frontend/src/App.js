@@ -14,8 +14,10 @@ function App() {
     setQuestion("");
 
     try {
-      // Force use of /api/chat path in all environments
-      const apiUrl = '/api/chat';
+      // Use environment-aware API URL
+      const apiUrl = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:3002/api/chat'
+        : '/api/chat';
       
       console.log("Sending request to:", apiUrl);
       const response = await axios.post(apiUrl, { question: question });
@@ -30,9 +32,20 @@ function App() {
         data: err.response?.data,
         message: err.message
       });
+
+      let errorMessage = 'Could not get response';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Authentication error: Please check API configuration';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
       setMessages([
         ...newMessages,
-        { type: "bot", text: `⚠️ Error: ${err.message || 'Could not get response'}` },
+        { type: "bot", text: `⚠️ Error: ${errorMessage}` },
       ]);
     }
   };

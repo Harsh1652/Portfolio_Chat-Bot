@@ -76,3 +76,13 @@ I believe great software is built at the intersection of thoughtful design, stro
 #Education
   MCA | UPES | 2023 - 2025
   BCA | St.Xavier's college | 2020 - 2023
+
+
+
+#skills
+    Programming Languages:  Java, Kotlin 
+    Frontend Development: HTML, CSS, JavaScript 
+    Backend and Server-Side Technologies: Jakarta EE, Spring Boot, Hibernate ,Node.js, Express 
+    Database Management: MySQL,MongoDB 
+    Development Tools and Build Systems: Maven 
+    Object-Oriented Programming

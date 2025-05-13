@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Configuration object - keeps all configurable elements in one place for easy updating
+// Configuration object - Enhanced with new features from server.js
 const config = {
   // NLP models configuration
   models: {
@@ -22,19 +22,37 @@ const config = {
       identifiers: ["#about", "about me:", "profile:", "bio:"]
     },
     projects: {
-      keywords: ["projects", "portfolio", "work", "created", "built", "developed"],
+      keywords: ["projects", "project", "portfolio", "work", "created", "built", "developed", "chatbot", "chat bot"],
       identifiers: ["#projects", "projects:", "portfolio:"],
-      knownProjects: ["shopease", "chattify", "securenet","portfolio Chatbot"] // Can be dynamically loaded from DB
+      knownProjects: [
+        "shopease", "shop ease", 
+        "chattify", 
+        "securenet", "secure net", 
+        "portfolio chatbot", "portfolio-chatbot", "portfoliochatbot",
+        "chatbot", "chat bot"
+      ],
+      allProjects: ["shopease", "chattify", "securenet", "portfolio chatbot"]
+    },
+    skills: {
+      keywords: ["skills", "skill", "technologies", "technology", "tech", "programming", "languages", "frameworks", "tools", "tech stack", "technical skills", "expertise", "proficient", "know", "experienced"],
+      identifiers: ["#skills", "skills:", "technical skills:", "technologies:", "tech stack:", "programming languages:"],
+      skillCategories: {
+        languages: ["java", "javascript", "html", "css", "sql"],
+        frameworks: ["spring boot", "spring", "react", "react.js", "node.js", "express", "express.js", "bootstrap", "tailwind"],
+        databases: ["mysql", "mongodb", "postgresql"],
+        tools: ["git", "github", "postman", "vs code", "intellij", "eclipse"],
+        others: ["rest api", "maven", "npm", "api", "json"]
+      }
     },
     experience: {
-      keywords: ["experience", "work", "history", "job", "career", "intern", "internship", "employment"],
-      identifiers: ["#experience", "experience:", "work history:"],
-      knownCompanies: ["excollo", "balaji exports", "freelance"] // Can be dynamically loaded from DB
+      keywords: ["experience", "work", "history", "job", "career", "intern", "internship", "employment", "worked", "working", "freelance", "freelancer"],
+      identifiers: ["#experience", "experience:", "work history:", "work experience:", "employment:"],
+      knownCompanies: ["excollo", "balaji exports", "freelance", "freelancer"]
     },
     education: {
       keywords: ["education", "study", "degree", "university", "college", "school", "course", "major", "academic"],
       identifiers: ["#education", "education:", "academic background:"],
-      knownInstitutions: ["university", "college", "institute"] // Can be dynamically loaded from DB
+      knownInstitutions: ["university", "college", "institute"]
     },
     services: {
       keywords: ["services", "offer", "offers", "providing", "provide", "do", "can do", "capabilities"],
@@ -62,19 +80,20 @@ const config = {
   
   // Response templates
   responses: {
-    greeting: "Hello! I'm an AI assistant that can tell you about Harsh's experience, projects, and skills. What would you like to know?",
-    notFound: "I don't have enough information to answer that question. Could you ask something about Harsh's experience, projects, or skills instead?",
-    notRelated: "I'm an assistant focused on providing information about Harsh. I can tell you about his experience, projects, and skills. What would you like to know about Harsh?"
+    greeting: "Hello! I'm an AI assistant that can tell you about Harsh's experience, projects, skills, and more. What would you like to know?",
+    notFound: "I don't have enough information to answer that question. Could you ask something about Harsh's experience, projects, skills, or education instead?",
+    notRelated: "I'm an assistant focused on providing information about Harsh. I can tell you about his experience, projects, skills, and education. What would you like to know about Harsh?",
+    projectsList: "Harsh has worked on several key projects: ShopEase (e-commerce platform), Chattify (real-time chat application), SecureNet (security monitoring system), and Portfolio Chatbot (AI assistant for his portfolio). Which project would you like to know more about?"
   },
   
   // Control variables
-  maxChunks: 5, // Reduced from 7 to reduce verbosity
-  minScore: 0.6, // Minimum similarity score to consider a chunk relevant
+  maxChunks: 5,
+  minScore: 0.5,
   
-  // System prompt template - simplified for shorter responses
-  systemPrompt: "You are a concise assistant for Harsh's portfolio. Format responses clearly but use at most 3-4 sentences total. Be direct and brief while maintaining accuracy. Avoid unnecessary detail or repetition.",
+  // System prompt template - includes important instruction about projects
+  systemPrompt: "You are a concise assistant for Harsh's portfolio. Format responses clearly but use at most 3-4 sentences total. Be direct and brief while maintaining accuracy. Avoid unnecessary detail or repetition. When asked about projects, always include all of Harsh's main projects: ShopEase, Chattify, SecureNet, and Portfolio Chatbot - omitting any of these projects is a serious error.",
   
-  // User prompt template - simplified and focused on brevity
+  // User prompt template - Enhanced with specific instructions
   userPromptTemplate: `You are an AI assistant that provides BRIEF information about Harsh's portfolio.
 
 IMPORTANT:
@@ -82,8 +101,10 @@ IMPORTANT:
 2. For lists, use at most 2-3 bullet points
 3. For projects, just give a 1-2 sentence summary
 4. For experience, just list the company name and core responsibility
-5. Never repeat information
-6. Focus on the specific question asked
+5. For skills, group them into categories (languages, frameworks, tools)
+6. Never repeat information
+7. Focus on the specific question asked
+8. When listing projects, ALWAYS include ALL projects mentioned in the context: ShopEase, SecureNet, Chattify, and Portfolio Chatbot
 
 Context:
 {context}
@@ -120,6 +141,28 @@ const cosineSimilarity = (a, b) => {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 };
 
+// Cached data for frequent lookups
+const portfolioTerms = new Set([
+  'portfolio', 'website', 'github', 'link', 'project', 'resume', 
+  'skill', 'skills', 'tech', 'stack', 'experience', 'job', 'work', 'contact',
+  'education', 'degree', 'university', 'college', 'his', 'him', 'technologies',
+  'programming', 'languages', 'frameworks', 'tools'
+]);
+
+// Cached regex patterns for direct projects queries
+const directProjectQueries = new Set([
+  "his projects", "projects", "what are his projects", 
+  "what projects has he worked on", "tell me about his projects",
+  "what projects has harsh worked on"
+]);
+
+// Cached regex patterns for skills queries
+const directSkillsQueries = new Set([
+  "his skills", "skills", "what are his skills", 
+  "what skills does he have", "tell me about his skills",
+  "what skills does harsh have", "his tech stack", "what technologies does he know"
+]);
+
 /**
  * Improved greeting detection with configuration-based approach
  * @param {string} text - User input to check
@@ -128,17 +171,17 @@ const cosineSimilarity = (a, b) => {
 function isGreeting(text) {
   const normalized = text.toLowerCase().trim();
   
-  // Check exact matches from config
+  // Check exact matches first (faster)
   if (config.greetings.exactMatches.includes(normalized)) {
     return true;
   }
   
-  // Check regex patterns from config
+  // Only check regex patterns if needed
   return config.greetings.patterns.some(regex => regex.test(normalized));
 }
 
 /**
- * Detects intent from user question
+ * Detects intent from user question - Enhanced with skills
  * @param {string} question - The user's question
  * @returns {Object} Map of category to relevance score
  */
@@ -146,71 +189,133 @@ function detectIntent(question) {
   const normalized = question.toLowerCase().trim();
   const intent = {};
   
-  // Check each category for keyword matches
-  Object.entries(config.categories).forEach(([category, data]) => {
-    const keywordMatches = data.keywords.filter(keyword => 
-      normalized.includes(keyword)
-    ).length;
+  // Check for general projects query first
+  const projectsKeywords = new Set(['projects', 'project']);
+  const hasProjectKeyword = [...projectsKeywords].some(keyword => normalized.includes(keyword));
+  const hasSpecificProject = config.categories.projects.knownProjects.some(project => 
+    normalized.includes(project.toLowerCase().replace(/-/g, ' ').replace(/-/g, ''))
+  );
+  
+  if (hasProjectKeyword && !hasSpecificProject) {
+    intent.projects = 2; // Higher weight for general projects
+  }
+  
+  // Check for general skills query
+  const skillsKeywords = new Set(['skills', 'skill', 'technologies', 'tech stack', 'programming languages', 'tools', 'frameworks']);
+  const hasSkillsKeyword = [...skillsKeywords].some(keyword => normalized.includes(keyword));
+  const hasSpecificSkill = Object.values(config.categories.skills.skillCategories)
+    .flat()
+    .some(skill => normalized.includes(skill.toLowerCase()));
+  
+  if (hasSkillsKeyword && !hasSpecificSkill) {
+    intent.skills = 2; // Higher weight for general skills query
+  }
+  
+  // Efficient category checking
+  for (const [category, data] of Object.entries(config.categories)) {
+    // Skip if we already detected a general query for this category
+    if ((category === 'projects' && intent.projects === 2) || 
+        (category === 'skills' && intent.skills === 2)) continue;
     
-    intent[category] = keywordMatches > 0 ? true : false;
-  });
+    // Optimize keyword matching
+    let keywordMatches = 0;
+    for (const keyword of data.keywords) {
+      if (keyword === 'chatbot' || keyword === 'chat bot') {
+        if (normalized.includes('chatbot') || normalized.includes('chat bot')) {
+          keywordMatches++;
+          break; // Only count once
+        }
+      } else if (normalized.includes(keyword)) {
+        keywordMatches++;
+      }
+    }
+    
+    if (keywordMatches > 0) {
+      intent[category] = keywordMatches;
+    }
+  }
+  
+  // Special handling for possessive forms
+  if (normalized.includes('his') || normalized.includes('harsh')) {
+    if (normalized.includes('experience') || normalized.includes('work')) {
+      intent.experience = intent.experience || 1;
+    }
+    if (normalized.includes('project') || normalized.includes('projects')) {
+      intent.projects = intent.projects || 1;
+    }
+    if (normalized.includes('skill') || normalized.includes('skills') || normalized.includes('technologies')) {
+      intent.skills = intent.skills || 1;
+    }
+  }
+  
+  // Unified chatbot detection
+  if (normalized.includes('chatbot') || normalized.includes('chat bot')) {
+    intent.projects = intent.projects || 1;
+  }
+  
+  // Enhanced skills detection for specific technologies
+  if (hasSpecificSkill) {
+    intent.skills = intent.skills || 1;
+  }
   
   return intent;
 }
 
 /**
- * Determines if the question is about Harsh or his portfolio
+ * Determines if the question is about Harsh or his portfolio - Enhanced with skills
  * @param {string} question - The user's question
  * @returns {boolean} True if related to Harsh, false otherwise
  */
 function isHarshRelated(question) {
   const normalized = question.toLowerCase().trim();
   
-  // Check if question explicitly mentions Harsh
+  // Fast check for explicit mentions
   if (normalized.includes('harsh')) {
     return true;
   }
   
-  // Check if any intent category is detected
+  // Check for intent detection (more expensive, so do this second)
   const intent = detectIntent(question);
   if (Object.values(intent).some(Boolean)) {
     return true;
   }
   
-  // Check for known project or company mentions
+  // Check for known terms (efficient lookup)
   const allKnownTerms = [
-    ...config.categories.projects.knownProjects || [],
-    ...config.categories.experience.knownCompanies || [],
-    ...config.categories.education.knownInstitutions || []
+    ...config.categories.projects.knownProjects,
+    ...config.categories.experience.knownCompanies,
+    ...config.categories.education.knownInstitutions,
+    ...Object.values(config.categories.skills.skillCategories).flat()
   ];
   
   if (allKnownTerms.some(term => normalized.includes(term.toLowerCase()))) {
     return true;
   }
   
-  // List of common portfolio-related terms
-  const portfolioTerms = [
-    'portfolio', 'website', 'github', 'link', 'project', 'resume', 
-    'skill', 'tech', 'stack', 'experience', 'job', 'work', 'contact',
-    'education', 'degree', 'university', 'college'
-  ];
-  
-  if (portfolioTerms.some(term => normalized.includes(term))) {
-    return true;
+  // Check common portfolio-related terms (using Set for O(1) lookups)
+  for (const term of portfolioTerms) {
+    if (normalized.includes(term)) {
+      return true;
+    }
   }
   
   return false;
 }
 
 /**
- * Get relevant chunks based on intent and semantic similarity
+ * Get relevant chunks based on intent and semantic similarity - Enhanced with skills
  * @param {Array} chunks - All available chunks
  * @param {Object} intent - Intent mapping from detectIntent
  * @param {Array} userEmbedding - User question embedding
+ * @param {string} originalQuestion - The original question for context
  * @returns {Array} Relevant chunks with their scores
  */
-function getRelevantChunks(chunks, intent, userEmbedding) {
-  // First, compute similarity scores for all chunks
+function getRelevantChunks(chunks, intent, userEmbedding, originalQuestion = "") {
+  const normalizedQuestion = originalQuestion.toLowerCase();
+  const selectedChunkIds = new Set();
+  let selectedChunks = [];
+  
+  // Pre-compute similarity scores once
   const rankedChunks = chunks
     .map(chunk => ({ 
       chunk, 
@@ -218,61 +323,207 @@ function getRelevantChunks(chunks, intent, userEmbedding) {
     }))
     .sort((a, b) => b.score - a.score);
   
-  // Create a set to track selected chunk IDs to avoid duplicates
-  const selectedChunkIds = new Set();
-  let selectedChunks = [];
-  
   // Helper function to safely add chunks without duplicates
-  const addChunk = (chunk, score) => {
-    if (!selectedChunkIds.has(chunk._id.toString()) && selectedChunks.length < config.maxChunks) {
+  const addChunk = (chunk, score, reason = "") => {
+    const chunkId = chunk._id.toString();
+    if (!selectedChunkIds.has(chunkId) && selectedChunks.length < config.maxChunks) {
       selectedChunks.push({ chunk, score });
-      selectedChunkIds.add(chunk._id.toString());
+      selectedChunkIds.add(chunkId);
+      console.log(`Added chunk (${reason}): ${chunk.content.substring(0, 50)}... [Score: ${score.toFixed(3)}]`);
       return true;
     }
     return false;
   };
   
-  // For each category in the intent, find relevant chunks
-  Object.entries(intent).forEach(([category, isRelevant]) => {
-    if (!isRelevant) return;
+  // Handle chatbot queries efficiently
+  if (normalizedQuestion.includes('chatbot') || normalizedQuestion.includes('chat bot')) {
+    const portfolioChatbotChunks = chunks.filter(chunk => {
+      const content = chunk.content.toLowerCase();
+      return content.includes('portfolio chatbot') || 
+             content.includes('portfolio-chatbot') || 
+             content.includes('chatbot') ||
+             content.includes('chat bot');
+    });
+    
+    portfolioChatbotChunks.forEach(chunk => addChunk(chunk, 1.0, "chatbot specific match"));
+    
+    // Early return if we found chatbot chunks and user is asking about projects
+    if (portfolioChatbotChunks.length > 0 && intent.projects) {
+      return selectedChunks;
+    }
+  }
+  
+  // Process skills intent
+  if (intent.skills) {
+    console.log("\nProcessing skills intent");
+    
+    // Check for general skills query
+    const isGeneralSkillsQuery = 
+      (normalizedQuestion.includes('skills') || normalizedQuestion.includes('technologies')) && 
+      !Object.values(config.categories.skills.skillCategories)
+        .flat()
+        .some(skill => normalizedQuestion.includes(skill.toLowerCase()));
+      
+    if (isGeneralSkillsQuery) {
+      // Get skills overview chunks first
+      const skillsOverviewChunks = chunks.filter(chunk => {
+        const content = chunk.content.toLowerCase();
+        return (content.includes('#skills') || 
+                content.includes('skills:') || 
+                content.includes('technical skills:') ||
+                content.includes('tech stack:')) && 
+               (content.includes('overview') || 
+                content.includes('programming languages') ||
+                content.includes('frameworks') ||
+                content.includes('tools'));
+      });
+      
+      skillsOverviewChunks.forEach(chunk => addChunk(chunk, 1.0, "skills overview"));
+      
+      // Get specific skill category chunks
+      chunks.forEach(chunk => {
+        const content = chunk.content.toLowerCase();
+        
+        // Check for skill categories
+        if (content.includes('programming languages') || 
+            content.includes('frameworks') || 
+            content.includes('databases') || 
+            content.includes('tools') ||
+            content.includes('technologies')) {
+          addChunk(chunk, 0.98, "skill category");
+        }
+        
+        // Check for specific skills mentioned
+        for (const [category, skills] of Object.entries(config.categories.skills.skillCategories)) {
+          for (const skill of skills) {
+            if (content.includes(skill.toLowerCase())) {
+              addChunk(chunk, 0.95, `specific skill: ${skill}`);
+              break; // Only add once per chunk
+            }
+          }
+        }
+      });
+    } else {
+      // Handle specific skill queries
+      const skillChunks = chunks.filter(chunk => {
+        const content = chunk.content.toLowerCase();
+        return content.includes('#skills') || 
+               content.includes('skills:') ||
+               content.includes('technical skills:') ||
+               content.includes('tech stack:') ||
+               Object.values(config.categories.skills.skillCategories)
+                 .flat()
+                 .some(skill => content.includes(skill.toLowerCase()));
+      });
+      
+      skillChunks.forEach(chunk => addChunk(chunk, 0.95, "specific skills"));
+    }
+  }
+  
+  // Process projects intent
+  if (intent.projects) {
+    console.log("\nProcessing projects intent");
+    
+    // Check for general projects query
+    const isGeneralProjectsQuery = 
+      normalizedQuestion.includes('projects') && 
+      !config.categories.projects.knownProjects.some(project => 
+        normalizedQuestion.includes(project.toLowerCase())
+      );
+      
+    if (isGeneralProjectsQuery) {
+      // Get overview chunks first
+      const projectsOverviewChunks = chunks.filter(chunk => {
+        const content = chunk.content.toLowerCase();
+        return (content.includes('#projects') || content.includes('projects:')) && 
+               content.includes('overview');
+      });
+      
+      projectsOverviewChunks.forEach(chunk => addChunk(chunk, 1.0, "projects overview"));
+      
+      // Map for faster lookups of project names
+      const projectNameMap = new Map();
+      config.categories.projects.knownProjects.forEach(project => {
+        projectNameMap.set(project.toLowerCase(), true);
+      });
+      
+      // Get specific project chunks efficiently
+      chunks.forEach(chunk => {
+        const content = chunk.content.toLowerCase();
+        for (const projectName of config.categories.projects.knownProjects) {
+          if (content.includes(projectName.toLowerCase())) {
+            addChunk(chunk, 0.98, `project: ${projectName}`);
+            break; // Only add once per chunk
+          }
+        }
+      });
+    } else {
+      // Handle specific project queries
+      const projectChunks = chunks.filter(chunk => {
+        const content = chunk.content.toLowerCase();
+        return content.includes('#projects') || 
+               content.includes('projects:') ||
+               content.includes('portfolio:') ||
+               config.categories.projects.knownProjects.some(project => 
+                 content.includes(project.toLowerCase())
+               );
+      });
+      
+      projectChunks.forEach(chunk => addChunk(chunk, 0.95, "specific project"));
+    }
+  }
+  
+  // Process other intent categories
+  for (const [category, relevance] of Object.entries(intent)) {
+    if (!relevance || category === 'projects' || category === 'skills') continue;
     
     const categoryData = config.categories[category];
     
     // Find chunks based on category identifiers
-    chunks.filter(chunk => {
+    chunks.forEach(chunk => {
       const content = chunk.content.toLowerCase();
-      return categoryData.identifiers.some(id => content.includes(id));
-    }).forEach(chunk => addChunk(chunk, 1.0));
+      for (const id of categoryData.identifiers) {
+        if (content.includes(id)) {
+          addChunk(chunk, 1.0, `${category} identifier`);
+          break;
+        }
+      }
+    });
     
-    // For projects and experience, add known items if they're in the config
-    if (category === 'projects' && categoryData.knownProjects) {
-      chunks.filter(chunk => {
-        const content = chunk.content.toLowerCase();
-        return categoryData.knownProjects.some(project => content.includes(project));
-      }).forEach(chunk => addChunk(chunk, 0.9));
-    }
-    
+    // Enhanced entity matching
     if (category === 'experience' && categoryData.knownCompanies) {
-      chunks.filter(chunk => {
+      chunks.forEach(chunk => {
         const content = chunk.content.toLowerCase();
-        return categoryData.knownCompanies.some(company => content.includes(company));
-      }).forEach(chunk => addChunk(chunk, 0.9));
+        for (const company of categoryData.knownCompanies) {
+          if (content.includes(company.toLowerCase())) {
+            addChunk(chunk, 0.9, `company: ${company}`);
+            break;
+          }
+        }
+      });
     }
     
     if (category === 'education' && categoryData.knownInstitutions) {
-      chunks.filter(chunk => {
+      chunks.forEach(chunk => {
         const content = chunk.content.toLowerCase();
-        return categoryData.knownInstitutions.some(institution => content.includes(institution));
-      }).forEach(chunk => addChunk(chunk, 0.9));
+        for (const institution of categoryData.knownInstitutions) {
+          if (content.includes(institution.toLowerCase())) {
+            addChunk(chunk, 0.9, `institution: ${institution}`);
+            break;
+          }
+        }
+      });
     }
-  });
-  
-  // Add top semantic matches if we haven't reached our limit
-  for (const rankedChunk of rankedChunks) {
-    if (selectedChunks.length >= config.maxChunks || rankedChunk.score < config.minScore) break;
-    addChunk(rankedChunk.chunk, rankedChunk.score);
   }
   
+  // Add top semantic matches to reach maxChunks
+  console.log("\nAdding semantic matches...");
+  for (const rankedChunk of rankedChunks) {
+    if (selectedChunks.length >= config.maxChunks || rankedChunk.score < config.minScore) break;
+    addChunk(rankedChunk.chunk, rankedChunk.score, "semantic similarity");
+  }
+  
+  console.log(`\nFinal selection: ${selectedChunks.length} chunks`);
   return selectedChunks;
 }
 
@@ -302,7 +553,7 @@ export default async (req, res) => {
   try {
     const { question } = req.body;
     
-    console.log(`Received question: "${question}"`);
+    console.log(`\n=== Processing question: "${question}" ===`);
 
     // Check if it's a greeting
     if (isGreeting(question)) {
@@ -318,6 +569,25 @@ export default async (req, res) => {
       return res.json({
         answer: config.responses.notRelated
       });
+    }
+    
+    // Special case: Direct projects list question
+    const normalizedQuestion = question.toLowerCase().trim();
+    if (directProjectQueries.has(normalizedQuestion) &&
+        !normalizedQuestion.includes("chatbot") &&
+        !normalizedQuestion.includes("securenet") &&
+        !normalizedQuestion.includes("shopease") &&
+        !normalizedQuestion.includes("chattify")) {
+      return res.json({ answer: config.responses.projectsList });
+    }
+
+    // Special case: Direct skills list question
+    if (directSkillsQueries.has(normalizedQuestion) &&
+        !Object.values(config.categories.skills.skillCategories)
+          .flat()
+          .some(skill => normalizedQuestion.includes(skill.toLowerCase()))) {
+      // Let the regular flow handle it to get from embeddings
+      console.log("General skills query detected, will use embeddings");
     }
     
     // Add more detailed DB connection logging
@@ -343,8 +613,14 @@ export default async (req, res) => {
     const Chunk = mongoose.models.Chunk || mongoose.model('Chunk', chunkSchema);
 
     // Fetch all chunks from database
-    const chunks = await Chunk.find();
+    const chunks = await Chunk.find().lean(); // Using lean() for better performance
     console.log(`Found ${chunks.length} chunks in database`);
+    
+    // Debug: Log all chunk content snippets
+    console.log("\nAll chunks in database:");
+    chunks.forEach((chunk, i) => {
+      console.log(`${i+1}. ${chunk.content.substring(0, 60)}...`);
+    });
     
     if (chunks.length === 0) {
       return res.json({ answer: config.responses.notFound });
@@ -354,15 +630,17 @@ export default async (req, res) => {
     const intent = detectIntent(question);
     console.log("Detected intent:", intent);
     
-    const selectedChunks = getRelevantChunks(chunks, intent, userEmbedding);
+    const selectedChunks = getRelevantChunks(chunks, intent, userEmbedding, question);
     
     // Log selected chunks with scores
+    console.log("\n=== Final selected chunks ===");
     selectedChunks.forEach((item, i) => {
-      console.log(`Selected chunk ${i+1} (score: ${item.score.toFixed(3)}): ${item.chunk.content.substring(0, 40)}...`);
+      console.log(`${i+1}. (score: ${item.score.toFixed(3)}): ${item.chunk.content.substring(0, 80)}...`);
     });
 
     // Handle empty results
     if (!selectedChunks.length) {
+      console.log("No relevant chunks found, returning notFound message");
       return res.json({ 
         answer: config.responses.notFound
       });
@@ -391,7 +669,11 @@ export default async (req, res) => {
       temperature: config.models.temperature,
     });
 
-    res.json({ answer: completion.choices[0].message.content });
+    const answer = completion.choices[0].message.content;
+    console.log(`\nGenerated answer: ${answer}`);
+    console.log("=====================================\n");
+
+    res.json({ answer });
   } catch (error) {
     console.error("API Error:", {
       message: error.message,

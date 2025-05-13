@@ -25,6 +25,6 @@ module.exports = [
   },
   {
     "id": "chunk-7",
-    "text": "#Education\r\n  MCA | UPES | 2023 - 2025\r\n  BCA | St.Xavier's college | 2020 - 2023"
+    "text": "#Education\r\n  MCA | UPES | 2023 - 2025\r\n  BCA | St.Xavier's college | 2020 - 2023\r\n\n#skills\r\n    Programming Languages:  Java, Kotlin \r\n    Frontend Development: HTML, CSS, JavaScript \r\n    Backend and Server-Side Technologies: Jakarta EE, Spring Boot, Hibernate ,Node.js, Express \r\n    Database Management: MySQL,MongoDB \r\n    Development Tools and Build Systems: Maven \r\n    Object-Oriented Programming"
   }
 ];

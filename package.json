@@ -4,16 +4,23 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "body-parser": "^2.2.0",
     "cohere-ai": "^7.17.1",
-    "openai": "^4.98.0",
-    "mongoose": "^8.14.2",
-    "express": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "body-parser": "^2.2.0"
+    "express": "^5.1.0",
+    "mongoose": "^8.14.2",
+    "openai": "^4.98.0"
   },
   "scripts": {
     "start": "node index.js",
-    "build": "cd frontend && npm run build"
+    "build": "cd frontend && npm install && npm run build",
+    "vercel-build": "cd frontend && npm install && npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

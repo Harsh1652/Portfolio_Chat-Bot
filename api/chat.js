@@ -538,7 +538,7 @@ export default async (req, res) => {
   // Handle CORS
   // Add these headers to your response
 res.setHeader('Access-Control-Allow-Credentials', true);
-res.setHeader('Access-Control-Allow-Origin', 'https://harsh-portfolio-harsh1652s-projects.vercel.app');
+res.setHeader('Access-Control-Allow-Origin', 'https://portfolio-chatbot-ecru.vercel.app/');
 res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
 res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 

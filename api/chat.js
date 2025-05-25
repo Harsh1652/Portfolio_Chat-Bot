@@ -52,7 +52,7 @@ const config = {
     education: {
       keywords: ["education", "study", "degree", "university", "college", "school", "course", "major", "academic"],
       identifiers: ["#education", "education:", "academic background:"],
-      knownInstitutions: ["university", "college", "institute"]
+      knownInstitutions: ["university", "college", "institute", "upes", "st.xavier", "xavier"]
     },
     services: {
       keywords: ["services", "offer", "offers", "providing", "provide", "do", "can do", "capabilities"],
@@ -92,7 +92,7 @@ const config = {
     notFound: "I don't have enough information to answer that question. Could you ask something about Harsh's experience, projects, skills, contact information, or education instead?",
     notRelated: "I'm an assistant focused on providing information about Harsh. I can tell you about his experience, projects, skills, contact information, and education. What would you like to know about Harsh?",
     projectsList: "Harsh has worked on several key projects: ShopEase (e-commerce platform), Chattify (real-time chat application), SecureNet (security monitoring system), and Portfolio Chatbot (AI assistant for his portfolio). Which project would you like to know more about?",
-    contact: "You can reach Harsh at: Email: harsh160502@gmail.com | Phone: +91 9982346893 | LinkedIn: https://www.linkedin.com/in/harsh-gupta16/ | GitHub: https://github.com/Harsh1652 | Website: https://tinyurl.com/2ebnnt79",
+    contact: "You can reach Harsh at: Email: harsh160502@gmail.com, Phone: +91 9982346893, LinkedIn: https://www.linkedin.com/in/harsh-gupta16/, GitHub: https://github.com/Harsh1652, Website: https://tinyurl.com/2ebnnt79",
     resume: "You can download Harsh's resume from: https://drive.google.com/file/d/1nYnWrLxtnjBWCE_P-LsfHyxctKSgYHNM/view?usp=sharing"
   },
   
@@ -101,7 +101,7 @@ const config = {
   minScore: 0.5,
   
   // System prompt template - includes important instruction about projects
-  systemPrompt: "You are a concise assistant for Harsh's portfolio. Format responses clearly but use at most 3-4 sentences total. Be direct and brief while maintaining accuracy. Avoid unnecessary detail or repetition. When asked about projects, always include all of Harsh's main projects: ShopEase, Chattify, SecureNet, and Portfolio Chatbot - omitting any of these projects is a serious error.",
+  systemPrompt: "You are a concise assistant for Harsh's portfolio. Format responses clearly but use at most 3-4 sentences total. Be direct and brief while maintaining accuracy. Avoid unnecessary detail or repetition. When asked about projects, always include all of Harsh's main projects: ShopEase, Chattify, SecureNet, and Portfolio Chatbot - omitting any of these projects is a serious error. For contact queries, provide specific contact details. For resume queries, provide the download link.",
   
   // User prompt template - Enhanced with specific instructions
   userPromptTemplate: `You are an AI assistant that provides BRIEF information about Harsh's portfolio.
@@ -112,9 +112,11 @@ IMPORTANT:
 3. For projects, just give a 1-2 sentence summary
 4. For experience, just list the company name and core responsibility
 5. For skills, group them into categories (languages, frameworks, tools)
-6. Never repeat information
-7. Focus on the specific question asked
-8. When listing projects, ALWAYS include ALL projects mentioned in the context: ShopEase, SecureNet, Chattify, and Portfolio Chatbot
+6. For contact info, provide the specific contact details requested
+7. For resume, provide the direct download link
+8. Never repeat information
+9. Focus on the specific question asked
+10. When listing projects, ALWAYS include ALL projects mentioned in the context: ShopEase, SecureNet, Chattify, and Portfolio Chatbot
 
 Context:
 {context}
@@ -151,12 +153,13 @@ const cosineSimilarity = (a, b) => {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 };
 
-// Cached data for frequent lookups
+// Cached data for frequent lookups - Enhanced with contact and resume terms
 const portfolioTerms = new Set([
   'portfolio', 'website', 'github', 'link', 'project', 'resume', 
   'skill', 'skills', 'tech', 'stack', 'experience', 'job', 'work', 'contact',
   'education', 'degree', 'university', 'college', 'his', 'him', 'technologies',
-  'programming', 'languages', 'frameworks', 'tools'
+  'programming', 'languages', 'frameworks', 'tools', 'email', 'phone', 
+  'linkedin', 'cv', 'hire', 'recruitment'
 ]);
 
 // Cached regex patterns for direct projects queries
@@ -201,7 +204,7 @@ function isGreeting(text) {
 }
 
 /**
- * Detects intent from user question - Enhanced with skills
+ * Detects intent from user question - Enhanced with contact and resume
  * @param {string} question - The user's question
  * @returns {Object} Map of category to relevance score
  */
@@ -306,7 +309,7 @@ function detectIntent(question) {
 }
 
 /**
- * Determines if the question is about Harsh or his portfolio - Enhanced with skills
+ * Determines if the question is about Harsh or his portfolio - Enhanced with contact and resume
  * @param {string} question - The user's question
  * @returns {boolean} True if related to Harsh, false otherwise
  */
@@ -347,7 +350,7 @@ function isHarshRelated(question) {
 }
 
 /**
- * Get relevant chunks based on intent and semantic similarity - Enhanced with skills
+ * Get relevant chunks based on intent and semantic similarity - Enhanced with contact and resume
  * @param {Array} chunks - All available chunks
  * @param {Object} intent - Intent mapping from detectIntent
  * @param {Array} userEmbedding - User question embedding
@@ -378,6 +381,41 @@ function getRelevantChunks(chunks, intent, userEmbedding, originalQuestion = "")
     }
     return false;
   };
+  
+  // Handle contact queries - Added from server.js
+  if (intent.contact) {
+    console.log("\nProcessing contact intent");
+    
+    const contactChunks = chunks.filter(chunk => {
+      const content = chunk.content.toLowerCase();
+      return content.includes('#contact') || 
+             content.includes('contact:') ||
+             content.includes('email') ||
+             content.includes('phone') ||
+             content.includes('linkedin') ||
+             content.includes('github') ||
+             content.includes('website');
+    });
+    
+    contactChunks.forEach(chunk => addChunk(chunk, 1.0, "contact info"));
+  }
+  
+  // Handle resume queries - Added from server.js
+  if (intent.resume) {
+    console.log("\nProcessing resume intent");
+    
+    const resumeChunks = chunks.filter(chunk => {
+      const content = chunk.content.toLowerCase();
+      return content.includes('#resume') || 
+             content.includes('resume:') ||
+             content.includes('cv:') ||
+             content.includes('drive.google.com') ||
+             content.includes('resume link') ||
+             content.includes('download');
+    });
+    
+    resumeChunks.forEach(chunk => addChunk(chunk, 1.0, "resume info"));
+  }
   
   // Handle chatbot queries efficiently
   if (normalizedQuestion.includes('chatbot') || normalizedQuestion.includes('chat bot')) {
@@ -517,39 +555,47 @@ function getRelevantChunks(chunks, intent, userEmbedding, originalQuestion = "")
     }
   }
   
-  // Handle contact queries
-  if (intent.contact) {
-    console.log("\nProcessing contact intent");
+  // Process other intent categories - Enhanced with education institutions
+  for (const [category, relevance] of Object.entries(intent)) {
+    if (!relevance || ['projects', 'skills', 'contact', 'resume'].includes(category)) continue;
     
-    const contactChunks = chunks.filter(chunk => {
+    const categoryData = config.categories[category];
+    
+    // Find chunks based on category identifiers
+    chunks.forEach(chunk => {
       const content = chunk.content.toLowerCase();
-      return content.includes('#contact') || 
-             content.includes('contact:') ||
-             content.includes('email') ||
-             content.includes('phone') ||
-             content.includes('linkedin') ||
-             content.includes('github') ||
-             content.includes('website');
+      for (const id of categoryData.identifiers) {
+        if (content.includes(id)) {
+          addChunk(chunk, 1.0, `${category} identifier`);
+          break;
+        }
+      }
     });
     
-    contactChunks.forEach(chunk => addChunk(chunk, 1.0, "contact info"));
-  }
-  
-  // Handle resume queries
-  if (intent.resume) {
-    console.log("\nProcessing resume intent");
+    // Enhanced entity matching
+    if (category === 'experience' && categoryData.knownCompanies) {
+      chunks.forEach(chunk => {
+        const content = chunk.content.toLowerCase();
+        for (const company of categoryData.knownCompanies) {
+          if (content.includes(company.toLowerCase())) {
+            addChunk(chunk, 0.9, `company: ${company}`);
+            break;
+          }
+        }
+      });
+    }
     
-    const resumeChunks = chunks.filter(chunk => {
-      const content = chunk.content.toLowerCase();
-      return content.includes('#resume') || 
-             content.includes('resume:') ||
-             content.includes('cv:') ||
-             content.includes('drive.google.com') ||
-             content.includes('resume link') ||
-             content.includes('download');
-    });
-    
-    resumeChunks.forEach(chunk => addChunk(chunk, 1.0, "resume info"));
+    if (category === 'education' && categoryData.knownInstitutions) {
+      chunks.forEach(chunk => {
+        const content = chunk.content.toLowerCase();
+        for (const institution of categoryData.knownInstitutions) {
+          if (content.includes(institution.toLowerCase())) {
+            addChunk(chunk, 0.9, `institution: ${institution}`);
+            break;
+          }
+        }
+      });
+    }
   }
   
   // Add top semantic matches to reach maxChunks
@@ -572,19 +618,15 @@ export default async (req, res) => {
   });
   
   // Handle CORS
-  // In your API endpoint at portfolio-chatbot-ecru.vercel.app/api/chat
-// Add these headers to your response
-res.setHeader('Access-Control-Allow-Credentials', true);
-res.setHeader('Access-Control-Allow-Origin', 'https://harsh-portfolio-harsh1652s-projects.vercel.app');
-res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', 'https://harsh-portfolio-harsh1652s-projects.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-// Handle OPTIONS request (preflight)
-if (req.method === 'OPTIONS') {
-  return res.status(200).end();
-}
-
-// Rest of your API logic
+  // Handle OPTIONS request (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

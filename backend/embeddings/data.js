@@ -25,6 +25,6 @@ module.exports = [
   },
   {
     "id": "chunk-7",
-    "text": "#Education\r\n  MCA | UPES | 2023 - 2025\r\n  BCA | St.Xavier's college | 2020 - 2023\r\n\n#skills\r\n    Programming Languages:  Java, Kotlin \r\n    Frontend Development: HTML, CSS, JavaScript \r\n    Backend and Server-Side Technologies: Jakarta EE, Spring Boot, Hibernate ,Node.js, Express \r\n    Database Management: MySQL,MongoDB \r\n    Development Tools and Build Systems: Maven \r\n    Object-Oriented Programming"
+    "text": "#Education\r\n  MCA | UPES | 2023 - 2025\r\n  BCA | St.Xavier's college | 2020 - 2023\r\n\n#skills\r\n    Programming Languages:  Java, Kotlin \r\n    Frontend Development: HTML, CSS, JavaScript \r\n    Backend and Server-Side Technologies: Jakarta EE, Spring Boot, Hibernate ,Node.js, Express \r\n    Database Management: MySQL,MongoDB \r\n    Development Tools and Build Systems: Maven \r\n    Object-Oriented Programming\r\n\n#Contact\r\n    Email - harsh160502@gmail.com\r\n    PhoneNo - +91 9982346893\r\n    Website -  https://tinyurl.com/2ebnnt79\r\n    Linkedin - https://www.linkedin.com/in/harsh-gupta16/\r\n    GitHub - https://github.com/Harsh1652\r\n\n#Resume \r\n    Link - https://drive.google.com/file/d/1nYnWrLxtnjBWCE_P-LsfHyxctKSgYHNM/view?usp=sharing"
   }
 ];

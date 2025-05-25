@@ -57,6 +57,14 @@ const config = {
     services: {
       keywords: ["services", "offer", "offers", "providing", "provide", "do", "can do", "capabilities"],
       identifiers: ["#services", "services:", "offerings:"]
+    },
+    contact: {
+      keywords: ["contact", "email", "phone", "number", "call", "reach", "linkedin", "github", "website", "portfolio", "social", "connect", "touch", "get in touch"],
+      identifiers: ["#contact", "contact:", "contact info:", "contact information:", "get in touch:", "reach me:"]
+    },
+    resume: {
+      keywords: ["resume", "cv", "curriculum vitae", "download", "pdf", "document", "hire", "hiring", "recruit", "recruitment"],
+      identifiers: ["#resume", "resume:", "cv:", "download resume:", "resume link:"]
     }
   },
   
@@ -80,10 +88,12 @@ const config = {
   
   // Response templates
   responses: {
-    greeting: "Hello! I'm an AI assistant that can tell you about Harsh's experience, projects, skills, and more. What would you like to know?",
-    notFound: "I don't have enough information to answer that question. Could you ask something about Harsh's experience, projects, skills, or education instead?",
-    notRelated: "I'm an assistant focused on providing information about Harsh. I can tell you about his experience, projects, skills, and education. What would you like to know about Harsh?",
-    projectsList: "Harsh has worked on several key projects: ShopEase (e-commerce platform), Chattify (real-time chat application), SecureNet (security monitoring system), and Portfolio Chatbot (AI assistant for his portfolio). Which project would you like to know more about?"
+    greeting: "Hello! I'm an AI assistant that can tell you about Harsh's experience, projects, skills, contact information, and more. What would you like to know?",
+    notFound: "I don't have enough information to answer that question. Could you ask something about Harsh's experience, projects, skills, contact information, or education instead?",
+    notRelated: "I'm an assistant focused on providing information about Harsh. I can tell you about his experience, projects, skills, contact information, and education. What would you like to know about Harsh?",
+    projectsList: "Harsh has worked on several key projects: ShopEase (e-commerce platform), Chattify (real-time chat application), SecureNet (security monitoring system), and Portfolio Chatbot (AI assistant for his portfolio). Which project would you like to know more about?",
+    contact: "You can reach Harsh at: Email: harsh160502@gmail.com | Phone: +91 9982346893 | LinkedIn: https://www.linkedin.com/in/harsh-gupta16/ | GitHub: https://github.com/Harsh1652 | Website: https://tinyurl.com/2ebnnt79",
+    resume: "You can download Harsh's resume from: https://drive.google.com/file/d/1nYnWrLxtnjBWCE_P-LsfHyxctKSgYHNM/view?usp=sharing"
   },
   
   // Control variables
@@ -163,6 +173,16 @@ const directSkillsQueries = new Set([
   "what skills does harsh have", "his tech stack", "what technologies does he know"
 ]);
 
+// Add these new cached sets for direct queries
+const directContactQueries = new Set([
+  "contact", "contact info", "contact information", "how to contact", 
+  "email", "phone", "linkedin", "github", "reach him", "get in touch"
+]);
+
+const directResumeQueries = new Set([
+  "resume", "cv", "download resume", "resume link", "curriculum vitae"
+]);
+
 /**
  * Improved greeting detection with configuration-based approach
  * @param {string} text - User input to check
@@ -211,11 +231,29 @@ function detectIntent(question) {
     intent.skills = 2; // Higher weight for general skills query
   }
   
+  // Check for contact queries
+  const contactKeywords = new Set(['contact', 'email', 'phone', 'linkedin', 'github', 'reach', 'touch']);
+  const hasContactKeyword = [...contactKeywords].some(keyword => normalized.includes(keyword));
+  
+  if (hasContactKeyword) {
+    intent.contact = 2; // High priority for contact queries
+  }
+  
+  // Check for resume queries
+  const resumeKeywords = new Set(['resume', 'cv', 'download', 'hire', 'recruitment']);
+  const hasResumeKeyword = [...resumeKeywords].some(keyword => normalized.includes(keyword));
+  
+  if (hasResumeKeyword) {
+    intent.resume = 2; // High priority for resume queries
+  }
+  
   // Efficient category checking
   for (const [category, data] of Object.entries(config.categories)) {
     // Skip if we already detected a general query for this category
     if ((category === 'projects' && intent.projects === 2) || 
-        (category === 'skills' && intent.skills === 2)) continue;
+        (category === 'skills' && intent.skills === 2) ||
+        (category === 'contact' && intent.contact === 2) ||
+        (category === 'resume' && intent.resume === 2)) continue;
     
     // Optimize keyword matching
     let keywordMatches = 0;
@@ -245,6 +283,12 @@ function detectIntent(question) {
     }
     if (normalized.includes('skill') || normalized.includes('skills') || normalized.includes('technologies')) {
       intent.skills = intent.skills || 1;
+    }
+    if (normalized.includes('contact') || normalized.includes('email') || normalized.includes('phone')) {
+      intent.contact = intent.contact || 1;
+    }
+    if (normalized.includes('resume') || normalized.includes('cv')) {
+      intent.resume = intent.resume || 1;
     }
   }
   
@@ -473,47 +517,39 @@ function getRelevantChunks(chunks, intent, userEmbedding, originalQuestion = "")
     }
   }
   
-  // Process other intent categories
-  for (const [category, relevance] of Object.entries(intent)) {
-    if (!relevance || category === 'projects' || category === 'skills') continue;
+  // Handle contact queries
+  if (intent.contact) {
+    console.log("\nProcessing contact intent");
     
-    const categoryData = config.categories[category];
-    
-    // Find chunks based on category identifiers
-    chunks.forEach(chunk => {
+    const contactChunks = chunks.filter(chunk => {
       const content = chunk.content.toLowerCase();
-      for (const id of categoryData.identifiers) {
-        if (content.includes(id)) {
-          addChunk(chunk, 1.0, `${category} identifier`);
-          break;
-        }
-      }
+      return content.includes('#contact') || 
+             content.includes('contact:') ||
+             content.includes('email') ||
+             content.includes('phone') ||
+             content.includes('linkedin') ||
+             content.includes('github') ||
+             content.includes('website');
     });
     
-    // Enhanced entity matching
-    if (category === 'experience' && categoryData.knownCompanies) {
-      chunks.forEach(chunk => {
-        const content = chunk.content.toLowerCase();
-        for (const company of categoryData.knownCompanies) {
-          if (content.includes(company.toLowerCase())) {
-            addChunk(chunk, 0.9, `company: ${company}`);
-            break;
-          }
-        }
-      });
-    }
+    contactChunks.forEach(chunk => addChunk(chunk, 1.0, "contact info"));
+  }
+  
+  // Handle resume queries
+  if (intent.resume) {
+    console.log("\nProcessing resume intent");
     
-    if (category === 'education' && categoryData.knownInstitutions) {
-      chunks.forEach(chunk => {
-        const content = chunk.content.toLowerCase();
-        for (const institution of categoryData.knownInstitutions) {
-          if (content.includes(institution.toLowerCase())) {
-            addChunk(chunk, 0.9, `institution: ${institution}`);
-            break;
-          }
-        }
-      });
-    }
+    const resumeChunks = chunks.filter(chunk => {
+      const content = chunk.content.toLowerCase();
+      return content.includes('#resume') || 
+             content.includes('resume:') ||
+             content.includes('cv:') ||
+             content.includes('drive.google.com') ||
+             content.includes('resume link') ||
+             content.includes('download');
+    });
+    
+    resumeChunks.forEach(chunk => addChunk(chunk, 1.0, "resume info"));
   }
   
   // Add top semantic matches to reach maxChunks
@@ -536,15 +572,19 @@ export default async (req, res) => {
   });
   
   // Handle CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
+  // In your API endpoint at portfolio-chatbot-ecru.vercel.app/api/chat
+// Add these headers to your response
+res.setHeader('Access-Control-Allow-Credentials', true);
+res.setHeader('Access-Control-Allow-Origin', 'https://harsh-portfolio-harsh1652s-projects.vercel.app');
+res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+// Handle OPTIONS request (preflight)
+if (req.method === 'OPTIONS') {
+  return res.status(200).end();
+}
+
+// Rest of your API logic
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -571,14 +611,31 @@ export default async (req, res) => {
       });
     }
     
-    // Special case: Direct projects list question
+    // Special case: Direct queries handling
     const normalizedQuestion = question.toLowerCase().trim();
+    
+    // Direct projects list question
     if (directProjectQueries.has(normalizedQuestion) &&
         !normalizedQuestion.includes("chatbot") &&
         !normalizedQuestion.includes("securenet") &&
         !normalizedQuestion.includes("shopease") &&
         !normalizedQuestion.includes("chattify")) {
       return res.json({ answer: config.responses.projectsList });
+    }
+
+    // Direct contact queries
+    if (directContactQueries.has(normalizedQuestion) ||
+        normalizedQuestion.includes("how to contact harsh") ||
+        normalizedQuestion.includes("harsh contact") ||
+        normalizedQuestion.includes("contact harsh")) {
+      return res.json({ answer: config.responses.contact });
+    }
+
+    // Direct resume queries
+    if (directResumeQueries.has(normalizedQuestion) ||
+        normalizedQuestion.includes("harsh resume") ||
+        normalizedQuestion.includes("download harsh resume")) {
+      return res.json({ answer: config.responses.resume });
     }
 
     // Special case: Direct skills list question

@@ -609,50 +609,168 @@ function getRelevantChunks(chunks, intent, userEmbedding, originalQuestion = "")
   return selectedChunks;
 }
 
-// Export handler function for Vercel serverless
-export default async function handler(req, res) {
+export default async (req, res) => {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  // Handle OPTIONS request (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { question } = req.body;
     
-    if (!question) {
-      return res.status(400).json({ message: 'Question is required' });
+    console.log(`\n=== Processing question: "${question}" ===`);
+
+    // Check if it's a greeting
+    if (isGreeting(question)) {
+      console.log("Greeting detected, returning welcome message");
+      return res.json({ 
+        answer: config.responses.greeting
+      });
+    }
+    
+    // Check if question is related to Harsh
+    if (!isHarshRelated(question)) {
+      console.log("Non-Harsh related question detected, returning redirect message");
+      return res.json({
+        answer: config.responses.notRelated
+      });
+    }
+    
+    // Special case: Direct queries handling
+    const normalizedQuestion = question.toLowerCase().trim();
+    
+    // Direct projects list question
+    if (directProjectQueries.has(normalizedQuestion) &&
+        !normalizedQuestion.includes("chatbot") &&
+        !normalizedQuestion.includes("securenet") &&
+        !normalizedQuestion.includes("shopease") &&
+        !normalizedQuestion.includes("chattify")) {
+      return res.json({ answer: config.responses.projectsList });
     }
 
-    // Connect to database
-    await connectToDatabase();
-    
-    // Initialize NLP clients
-    const cohere = new CohereClient({ 
-      token: process.env.COHERE_API_KEY 
-    });
-    
-    const openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
-    });
-    
-    // Create Chunk model
-    const Chunk = mongoose.models.Chunk || mongoose.model('Chunk', chunkSchema);
-    
-    // Get all chunks from database
-    const chunks = await Chunk.find({});
+    // Direct contact queries
+    if (directContactQueries.has(normalizedQuestion) ||
+        normalizedQuestion.includes("how to contact harsh") ||
+        normalizedQuestion.includes("harsh contact") ||
+        normalizedQuestion.includes("contact harsh")) {
+      return res.json({ answer: config.responses.contact });
+    }
 
-    // Rest of your processing logic
-    // ... existing code processing logic here ...
+    // Direct resume queries
+    if (directResumeQueries.has(normalizedQuestion) ||
+        normalizedQuestion.includes("harsh resume") ||
+        normalizedQuestion.includes("download harsh resume")) {
+      return res.json({ answer: config.responses.resume });
+    }
+
+    // Special case: Direct skills list question
+    if (directSkillsQueries.has(normalizedQuestion) &&
+        !Object.values(config.categories.skills.skillCategories)
+          .flat()
+          .some(skill => normalizedQuestion.includes(skill.toLowerCase()))) {
+      // Let the regular flow handle it to get from embeddings
+      console.log("General skills query detected, will use embeddings");
+    }
     
-    // For now, return a test response to validate the API is working
-    return res.status(200).json({ 
-      answer: "This is a test response from the API. If you see this, the API route is working correctly." 
+    // Add more detailed DB connection logging
+    console.log("Connecting to MongoDB...");
+    await connectToDatabase();
+    console.log("MongoDB connected successfully");
+
+    // Initialize Cohere client for embeddings
+    const cohere = new CohereClient({
+      token: process.env.COHERE_API_KEY,
     });
     
+    // Generate embeddings for the question
+    const cohereRes = await cohere.embed({
+      texts: [question],
+      model: config.models.embedding,
+      inputType: "search_query",
+    });
+
+    const userEmbedding = cohereRes.embeddings[0];
+
+    // Define Chunk model for this function
+    const Chunk = mongoose.models.Chunk || mongoose.model('Chunk', chunkSchema);
+
+    // Fetch all chunks from database
+    const chunks = await Chunk.find().lean(); // Using lean() for better performance
+    console.log(`Found ${chunks.length} chunks in database`);
+    
+    // Debug: Log all chunk content snippets
+    console.log("\nAll chunks in database:");
+    chunks.forEach((chunk, i) => {
+      console.log(`${i+1}. ${chunk.content.substring(0, 60)}...`);
+    });
+    
+    if (chunks.length === 0) {
+      return res.json({ answer: config.responses.notFound });
+    }
+
+    // Detect intent and get relevant chunks
+    const intent = detectIntent(question);
+    console.log("Detected intent:", intent);
+    
+    const selectedChunks = getRelevantChunks(chunks, intent, userEmbedding, question);
+    
+    // Log selected chunks with scores
+    console.log("\n=== Final selected chunks ===");
+    selectedChunks.forEach((item, i) => {
+      console.log(`${i+1}. (score: ${item.score.toFixed(3)}): ${item.chunk.content.substring(0, 80)}...`);
+    });
+
+    // Handle empty results
+    if (!selectedChunks.length) {
+      console.log("No relevant chunks found, returning notFound message");
+      return res.json({ 
+        answer: config.responses.notFound
+      });
+    }
+
+    const combinedContent = selectedChunks.map(item => item.chunk.content).join("\n\n");
+
+    // Initialize OpenAI
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Use template for user prompt
+    const userPrompt = config.userPromptTemplate
+      .replace("{context}", combinedContent)
+      .replace("{question}", question);
+
+    // Generate response using OpenAI
+    const completion = await openai.chat.completions.create({
+      model: config.models.completion,
+      messages: [
+        { 
+          role: "system", 
+          content: config.systemPrompt
+        },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: config.models.temperature,
+    });
+
+    const answer = completion.choices[0].message.content;
+    console.log(`\nGenerated answer: ${answer}`);
+    console.log("=====================================\n");
+
+    res.json({ answer });
   } catch (error) {
-    console.error('API Error:', error);
-    return res.status(500).json({ 
-      message: 'Internal server error',
-      error: error.message
+    console.error("API Error:", {
+      message: error.message,
+      stack: error.stack
     });
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
-}
+};

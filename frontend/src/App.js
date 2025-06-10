@@ -1,32 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import "./App.css";
 
 function App() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);
-  const [apiStatus, setApiStatus] = useState(null);
-
-  // Check API health on load
-  useEffect(() => {
-    const checkApiHealth = async () => {
-      try {
-        const healthUrl = process.env.NODE_ENV === 'development' 
-          ? 'http://localhost:3002/api/health'
-          : '/api/health';
-        
-        console.log("Checking API health at:", healthUrl);
-        const response = await axios.get(healthUrl);
-        console.log("API health response:", response.data);
-        setApiStatus("connected");
-      } catch (err) {
-        console.error("API health check failed:", err);
-        setApiStatus("error");
-      }
-    };
-
-    checkApiHealth();
-  }, []);
 
   const handleSend = async () => {
     if (!question.trim()) return;
@@ -75,17 +53,7 @@ function App() {
   return (
     <div className="App">
       <h1>💬 Harsh's Portfolio Chatbot</h1>
-      {apiStatus === "error" && (
-        <div className="api-status error">
-          ⚠️ API Connection Error - Please check the server
-        </div>
-      )}
       <div className="chat-box">
-        {messages.length === 0 && (
-          <div className="welcome-message">
-            👋 Hi there! I'm Harsh's portfolio chatbot. Ask me anything about Harsh's projects, skills, or experience!
-          </div>
-        )}
         {messages.map((msg, i) => (
           <div key={i} className={`message ${msg.type}`}>
             {msg.text}

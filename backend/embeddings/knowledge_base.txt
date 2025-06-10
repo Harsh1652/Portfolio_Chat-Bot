@@ -1,24 +1,31 @@
 #About Me
-As a backend-focused developer with full-stack experience, I thrive on building secure, scalable systems that make a real impact. 
-At Excollo, I'm currently working on an Order Management System where I design and implement core backend modules and explore customer clustering using vector databases and ML techniques.
-My core strengths lie in Node.js, Express, and MongoDB, alongside a strong foundation in Java and Spring Boot. 
-I enjoy architecting clean APIs, solving complex backend problems, and integrating systems that perform efficiently under real-world demands.
-Outside of my development work, I’m constantly exploring new technologies, sharpening my problem-solving skills on LeetCode, and working on personal projects that push my learning further. 
-I believe great software is built at the intersection of thoughtful design, strong architecture, and a passion for continuous improvement.
+Hi there! 👋 I’m Harsh Gupta, a Software Engineer with a strong passion for building intelligent and scalable applications. I recently completed my MCA from UPES (2025) and have been exploring the world of AI-powered solutions, backend systems, and automation workflows ever since.
+I love working at the intersection of AI, backend engineering, and workflow automation. Some of my recent projects include:
+Developing AI automation agents with n8n and LLM integrations
+Building an AI-powered chatbot (the very one you’re talking to!) using OpenAI GPT and vector search
+Creating full-stack applications and real-time systems using Node.js, MongoDB, Spring Boot, and more
+This chatbot is designed to help you explore my portfolio, projects, and skills — feel free to ask me anything! Whether you’re curious about my latest work or my technical background, I’m here to chat. 🚀
 
 #Experience
-    Backend Developer Intern
     Excollo
-    Feb 2025 - Present
-        CRUDO - 
-            Contributed to a full-stack order management system (Crudo), integrated with SWIL ERP
-            Developed and maintained modules: Order, Customer, Notification, and Store
-            Worked with Node.js, Express, MongoDB, JWT, REST APIs, Cron jobs
-            Implementing vector database for customer clustering and purchase pattern analysis
+        Software Engineer
+        June 2025 – Present                                                                                                                                                           
+            Projects: AI Agent Automation with n8n
+                Building AI automation agents using n8n for document parsing, data extraction, and workflow automation.
+                Collaborating on prompt engineering, LLM integration, and vector search using OpenAI + Pinecone.
+
+    Excollo
+        Backend Developer Intern
+        Feb 2025 - May 2025
+            CRUDO - 
+                Contributed to a full-stack order management system (Crudo), integrated with SWIL ERP
+                Developed and maintained modules: Order, Customer, Notification, and Store
+                Worked with Node.js, Express, MongoDB, JWT, REST APIs, Cron jobs
+                Implementing vector database for customer clustering and purchase pattern analysis
 
     Freelance 
         Balaji Exports 
-            Build a business website for Balaji Exports using React and MUI.
+            Build a business website for Balaji Exports using React MUI, Next.Js , Type.
 
 
     
@@ -80,11 +87,12 @@ I believe great software is built at the intersection of thoughtful design, stro
 
 
 #skills
-    Programming Languages:  Java, Kotlin 
-    Frontend Development: HTML, CSS, JavaScript 
-    Backend and Server-Side Technologies: Jakarta EE, Spring Boot, Hibernate ,Node.js, Express 
-    Database Management: MySQL,MongoDB 
-    Development Tools and Build Systems: Maven 
+    Languages: Java, Kotlin, JavaScript  
+    Backend: Node.js, Express, Spring Boot, Jakarta EE, Hibernate  
+    Frontend: HTML, CSS, JavaScript, Thymeleaf, MUI  
+    Databases: MongoDB, MySQL, Pinecone (Vector DB)  
+    AI Tools: OpenAI GPT, Cohere, n8n, Prompt Engineering  
+    Tools & Platforms: VS Code, Cursor, Postman, Git, GitHub, Maven, REST APIs, JWT, Socket.io
     Object-Oriented Programming
 
 #Contact
@@ -96,5 +104,4 @@ I believe great software is built at the intersection of thoughtful design, stro
 
 
 #Resume 
-    Link - https://drive.google.com/file/d/1nYnWrLxtnjBWCE_P-LsfHyxctKSgYHNM/view?usp=sharing
-    
+    Link - https://drive.google.com/file/d/1q3fo8tdYrtK6cIDZaKHKuDCsf4jSUtJP/view?usp=sharing

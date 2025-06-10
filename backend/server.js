@@ -93,8 +93,8 @@ const config = {
     notFound: "I don't have enough information to answer that question. Could you ask something about Harsh's experience, projects, skills, contact information, or education instead?",
     notRelated: "I'm an assistant focused on providing information about Harsh. I can tell you about his experience, projects, skills, contact information, and education. What would you like to know about Harsh?",
     projectsList: "Harsh has worked on several key projects: ShopEase (e-commerce platform), Chattify (real-time chat application), SecureNet (security monitoring system), and Portfolio Chatbot (AI assistant for his portfolio). Which project would you like to know more about?",
-    contact: "You can reach Harsh at: Email: harsh160502@gmail.com | Phone: +91 9982346893 | LinkedIn: https://www.linkedin.com/in/harsh-gupta16/ | GitHub: https://github.com/Harsh1652 | Website: https://tinyurl.com/2ebnnt79",
-    resume: "You can download Harsh's resume from: https://drive.google.com/file/d/1nYnWrLxtnjBWCE_P-LsfHyxctKSgYHNM/view?usp=sharing"
+    contact: "You can reach Harsh at: Email: harsh160502@gmail.com, Phone: +91 9982346893, LinkedIn: https://www.linkedin.com/in/harsh-gupta16/, GitHub: https://github.com/Harsh1652, Website: https://tinyurl.com/2ebnnt79",
+    resume: "You can download Harsh's resume from: https://drive.google.com/file/d/1q3fo8tdYrtK6cIDZaKHKuDCsf4jSUtJP/view?usp=sharing"
   },
   
   maxChunks: 5,
@@ -734,7 +734,7 @@ async function startServer() {
     app.listen(config.port, () => {
       console.log(`🚀 Server running on http://localhost:${config.port}`);
     });
-  } catch(error) {
+  } catch (error) {
     console.error("❌ Failed to start server:", error);
     process.exit(1);
   }

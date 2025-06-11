@@ -1,10 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
 function App() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiStatus, setApiStatus] = useState(null);
+
+  // Check API health on load
+  useEffect(() => {
+    const checkApiHealth = async () => {
+      try {
+        const response = await axios.get('/api/health');
+        console.log("API health response:", response.data);
+        setApiStatus("connected");
+      } catch (err) {
+        console.error("API health check failed:", err);
+        setApiStatus("error");
+      }
+    };
+
+    checkApiHealth();
+  }, []);
 
   const handleSend = async () => {
     if (!question.trim()) return;
@@ -12,26 +30,19 @@ function App() {
     const newMessages = [...messages, { type: "user", text: question }];
     setMessages(newMessages);
     setQuestion("");
+    setIsLoading(true);
 
     try {
-      // Use environment-aware API URL
-      const apiUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:3002/api/chat'
-        : '/api/chat';
-      
-      console.log("Sending request to:", apiUrl);
-      const response = await axios.post(apiUrl, { question: question });
+      console.log("Sending request to API");
+      const response = await axios.post('/api/chat', { question });
       console.log("Response received:", response.data);
+      
       setMessages([
         ...newMessages,
-        { type: "bot", text: response.data.answer.trim() },
+        { type: "bot", text: response.data.answer }
       ]);
     } catch (err) {
-      console.error("Error details:", {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message
-      });
+      console.error("Error details:", err);
 
       let errorMessage = 'Could not get response';
       
@@ -47,19 +58,43 @@ function App() {
         ...newMessages,
         { type: "bot", text: `⚠️ Error: ${errorMessage}` },
       ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="App">
       <h1>💬 Harsh's Portfolio Chatbot</h1>
+      
+      {apiStatus === "error" && (
+        <div className="api-status error">
+          ⚠️ API Connection Error - Please check the server
+        </div>
+      )}
+      
       <div className="chat-box">
+        {messages.length === 0 && (
+          <div className="welcome-message">
+            👋 Hi there! I'm Harsh's portfolio chatbot. Ask me anything about Harsh's projects, skills, or experience!
+          </div>
+        )}
+        
         {messages.map((msg, i) => (
           <div key={i} className={`message ${msg.type}`}>
             {msg.text}
           </div>
         ))}
+        
+        {isLoading && (
+          <div className="message bot loading">
+            <div className="loading-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </div>
+          </div>
+        )}
       </div>
+      
       <div className="input-area">
         <input
           type="text"
@@ -67,8 +102,11 @@ function App() {
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ask something..."
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          disabled={isLoading}
         />
-        <button onClick={handleSend}>Send</button>
+        <button onClick={handleSend} disabled={isLoading}>
+          {isLoading ? "Sending..." : "Send"}
+        </button>
       </div>
     </div>
   );

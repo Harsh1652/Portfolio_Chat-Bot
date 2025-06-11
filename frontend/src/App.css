@@ -1,13 +1,9 @@
 .App {
-  font-family: Arial, sans-serif;
   text-align: center;
-  padding: 20px;
-  background: #f2f2f2;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
   max-width: 800px;
   margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
 
 h1 {
@@ -16,33 +12,38 @@ h1 {
 }
 
 .chat-box {
-  flex: 1;
-  padding: 10px;
-  background: white;
-  border-radius: 10px;
-  overflow-y: auto;
-  margin-bottom: 10px;
+  height: 400px;
   border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
 }
 
 .message {
-  margin: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 70%;
-  text-align: left;
+  max-width: 80%;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border-radius: 20px;
+  word-wrap: break-word;
+  line-height: 1.4;
 }
 
-.message.user {
-  background: #d1e7dd;
+.user {
   align-self: flex-end;
-  margin-left: auto;
+  background-color: #3498db;
+  color: white;
+  text-align: right;
 }
 
-.message.bot {
-  background: #f8d7da;
+.bot {
   align-self: flex-start;
-  margin-right: auto;
+  background-color: #e5e5ea;
+  color: #333;
+  text-align: left;
 }
 
 .input-area {
@@ -54,22 +55,33 @@ input {
   flex: 1;
   padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 16px;
+}
+
+input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
 }
 
 button {
   padding: 10px 20px;
-  background: #3A6B3D;
+  background-color: #3498db;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
+  font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 button:hover {
   background-color: #2980b9;
+}
+
+button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
 }
 
 .welcome-message {
@@ -93,4 +105,37 @@ button:hover {
   background-color: #ffecec;
   color: #e74c3c;
   border: 1px solid #ffb8b8;
+}
+
+.loading-dots {
+  text-align: center;
+}
+
+.loading-dots span {
+  animation: loading 1.4s infinite ease-in-out both;
+  display: inline-block;
+  font-size: 24px;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loading {
+  0%, 80%, 100% { 
+    transform: scale(0);
+    opacity: 0.2;
+  } 
+  40% { 
+    transform: scale(1);
+    opacity: 1;
+  }
 }
